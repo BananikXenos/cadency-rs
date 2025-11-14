@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+
 use crate::{error::CadencyError, http::get_http_client, utils};
 use serenity::{
     all::{Guild, GuildId},
@@ -20,7 +22,7 @@ impl TypeMapKey for TrackMetaKey {
 }
 
 pub fn get_active_voice_channel_id(
-    guild: CacheRef<'_, GuildId, Guild>,
+    guild: CacheRef<'_, GuildId, Guild, Infallible>,
     user_id: model::id::UserId,
 ) -> Option<model::id::ChannelId> {
     guild
