@@ -1,4 +1,4 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.81.0-slim-bullseye as build_base
+FROM lukemathwalker/cargo-chef:latest-rust-1.91.1-slim-trixie as build_base
 
 FROM build_base as planner
 WORKDIR /cadency
@@ -29,7 +29,7 @@ ENV CARGO_TERM_COLOR=always
 RUN cargo build --release --bin cadency
 
 # Downloads yt-dlp
-FROM bitnami/minideb:bullseye as packages
+FROM bitnami/minideb:trixie as packages
 WORKDIR /packages
 COPY --from=builder /cadency/.yt-dlprc .
 RUN YTDLP_VERSION=$(cat .yt-dlprc) && \
@@ -38,7 +38,7 @@ RUN YTDLP_VERSION=$(cat .yt-dlprc) && \
 
 # Based on: https://github.com/zarmory/docker-python-minimal/blob/master/Dockerfile
 # Removes Python build and developmenttools like pip.
-FROM bitnami/minideb:bullseye as python-builder
+FROM bitnami/minideb:trixie as python-builder
 RUN apt-get update && apt-get install -y python3-minimal binutils && \
   rm -rf /usr/local/lib/python*/ensurepip && \
   rm -rf /usr/local/lib/python*/idlelib && \
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y python3-minimal binutils && \
   find /usr/local/bin -not -name 'python*' \( -type f -o -type l \) -exec rm {} \;&& \
   rm -rf /usr/local/share/*
 
-FROM bitnami/minideb:bullseye as runtime
+FROM bitnami/minideb:trixie as runtime
 LABEL org.opencontainers.image.source="https://github.com/jontze/cadency-rs"
 WORKDIR /cadency
 COPY --from=builder /cadency/target/release/cadency cadency
