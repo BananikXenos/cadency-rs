@@ -42,7 +42,7 @@ jobs:
         run: |
           cargo set-version ${{ steps.next.outputs.version }}
       - name: Commit Version Bump (if changed)
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         id: commit
         with:
           commit_message: "chore(version): Bump version to ${{ steps.next.outputs.version }}"
