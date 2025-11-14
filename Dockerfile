@@ -1,11 +1,11 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.91.1-slim-trixie as build_base
+FROM lukemathwalker/cargo-chef:latest-rust-1.91.1-slim-trixie AS build_base
 
-FROM build_base as planner
+FROM build_base AS planner
 WORKDIR /cadency
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM build_base as cacher
+FROM build_base AS cacher
 WORKDIR /cadency
 COPY --from=planner /cadency/recipe.json recipe.json
 ENV RUSTUP_MAX_RETRIES=100
@@ -14,9 +14,9 @@ ENV CARGO_NET_RETRY=100
 ENV CARGO_TERM_COLOR=always
 RUN apt-get update && apt-get install -y cmake && apt-get autoremove -y
 # Build dependencies - this is the dependencies caching layer
-RUN cargo chef cook --release --recipe-path recipe.json 
+RUN cargo chef cook --release --recipe-path recipe.json
 
-FROM build_base as builder
+FROM build_base AS builder
 WORKDIR /cadency
 COPY . .
 COPY --from=cacher /cadency/target target
@@ -29,7 +29,7 @@ ENV CARGO_TERM_COLOR=always
 RUN cargo build --release --bin cadency
 
 # Downloads yt-dlp
-FROM bitnami/minideb:trixie as packages
+FROM bitnami/minideb:trixie AS packages
 WORKDIR /packages
 COPY --from=builder /cadency/.yt-dlprc .
 RUN YTDLP_VERSION=$(cat .yt-dlprc) && \
@@ -38,7 +38,7 @@ RUN YTDLP_VERSION=$(cat .yt-dlprc) && \
 
 # Based on: https://github.com/zarmory/docker-python-minimal/blob/master/Dockerfile
 # Removes Python build and developmenttools like pip.
-FROM bitnami/minideb:trixie as python-builder
+FROM bitnami/minideb:trixie AS python-builder
 RUN apt-get update && apt-get install -y python3-minimal binutils && \
   rm -rf /usr/local/lib/python*/ensurepip && \
   rm -rf /usr/local/lib/python*/idlelib && \
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y python3-minimal binutils && \
   find /usr/local/bin -not -name 'python*' \( -type f -o -type l \) -exec rm {} \;&& \
   rm -rf /usr/local/share/*
 
-FROM bitnami/minideb:trixie as runtime
+FROM bitnami/minideb:trixie AS runtime
 LABEL org.opencontainers.image.source="https://github.com/jontze/cadency-rs"
 WORKDIR /cadency
 COPY --from=builder /cadency/target/release/cadency cadency
