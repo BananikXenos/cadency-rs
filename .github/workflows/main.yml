@@ -24,10 +24,10 @@ jobs:
           fetch-depth: 0
       - name: Fetch tags
         run: git fetch --tags
-      - name: Install git-cliff for versioning
-        uses: taiki-e/install-action@v2
+      - name: Setup Conventional Versioning
+        uses: jontze/.workflows/setup-conventional-versioning@main
         with:
-          tool: git-cliff
+          version: latest
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-binstall
@@ -37,32 +37,10 @@ jobs:
       - name: Specify next version
         id: next
         run: |
-          # Get current version from Cargo.toml
-          CURRENT_VERSION=$(grep '^version' cadency/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          echo "Current version: $CURRENT_VERSION"
-          
-          # Try to get bumped version from git-cliff based on conventional commits
-          NEXT_VERSION=$(git-cliff --bumped-version 2>/dev/null || echo "")
-          
-          # If git-cliff fails or returns empty, keep current version
-          if [ -z "$NEXT_VERSION" ] || [ "$NEXT_VERSION" = "null" ]; then
-            echo "No version bump needed, keeping current version: $CURRENT_VERSION"
-            NEXT_VERSION="$CURRENT_VERSION"
-          fi
-          
-          echo "Next version: $NEXT_VERSION"
-          echo "version=${NEXT_VERSION#v}" >> $GITHUB_OUTPUT
+          echo "version=$(conventional-versioning -o plain)" >> $GITHUB_OUTPUT
       - name: Set Cargo version
         run: |
-          CURRENT_VERSION=$(grep '^version' cadency/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          NEXT_VERSION="${{ steps.next.outputs.version }}"
-          
-          if [ "$CURRENT_VERSION" != "$NEXT_VERSION" ]; then
-            echo "Bumping version from $CURRENT_VERSION to $NEXT_VERSION"
-            cargo set-version $NEXT_VERSION
-          else
-            echo "Version unchanged: $CURRENT_VERSION"
-          fi
+          cargo set-version ${{ steps.next.outputs.version }}
       - name: Commit Version Bump (if changed)
         uses: stefanzweifel/git-auto-commit-action@v7
         id: commit
