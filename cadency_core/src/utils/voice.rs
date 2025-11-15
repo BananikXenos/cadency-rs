@@ -14,7 +14,6 @@ use songbird::{
     Songbird,
 };
 
-
 pub fn get_active_voice_channel_id(
     guild: CacheRef<'_, GuildId, Guild, Infallible>,
     user_id: model::id::UserId,

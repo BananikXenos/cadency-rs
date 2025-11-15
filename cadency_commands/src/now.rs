@@ -1,7 +1,6 @@
 use cadency_core::{
     response::{Response, ResponseBuilder},
-    utils,
-    CadencyCommand, CadencyError,
+    utils, CadencyCommand, CadencyError,
 };
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use songbird::{input::AuxMetadata, tracks::LoopState};
