@@ -18,7 +18,7 @@ jobs:
       - test_branch
     steps:
       - name: Checkout with deploy key
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ssh-key: ${{ secrets.CI_TAG_DEPLOY_KEY }}
           fetch-depth: 0
