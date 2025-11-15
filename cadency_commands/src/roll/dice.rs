@@ -17,8 +17,8 @@ impl Dice {
 
 impl RollDice for Dice {
     fn roll(&self) -> i64 {
-        let mut rng = rand::thread_rng();
-        rng.gen_range(1..=self.sides) as i64
+        let mut rng = rand::rng();
+        rng.random_range(1..=self.sides) as i64
     }
 }
 
