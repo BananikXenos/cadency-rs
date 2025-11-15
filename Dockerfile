@@ -1,4 +1,6 @@
 FROM lukemathwalker/cargo-chef:latest-rust-1.91.1-slim-trixie AS build_base
+# Install cmake once in base layer for reuse across all build stages
+RUN apt-get update && apt-get install -y cmake && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 FROM build_base AS planner
 WORKDIR /cadency
@@ -12,7 +14,6 @@ ENV RUSTUP_MAX_RETRIES=100
 ENV CARGO_INCREMENTAL=0
 ENV CARGO_NET_RETRY=100
 ENV CARGO_TERM_COLOR=always
-RUN apt-get update && apt-get install -y cmake && apt-get autoremove -y
 # Build dependencies - this is the dependencies caching layer
 RUN cargo chef cook --release --recipe-path recipe.json
 
@@ -25,19 +26,20 @@ ENV RUSTUP_MAX_RETRIES=100
 ENV CARGO_INCREMENTAL=0
 ENV CARGO_NET_RETRY=100
 ENV CARGO_TERM_COLOR=always
-# Build and cache only the cadency app with the previously builded dependencies
+# Build and cache only the cadency app with the previously built dependencies
 RUN cargo build --release --bin cadency
 
 # Downloads yt-dlp
 FROM bitnami/minideb:trixie AS packages
 WORKDIR /packages
-COPY --from=builder /cadency/.yt-dlprc .
+COPY .yt-dlprc .
 RUN YTDLP_VERSION=$(cat .yt-dlprc) && \
   apt-get update && apt-get install -y curl && \
-  curl -L https://github.com/yt-dlp/yt-dlp/releases/download/$YTDLP_VERSION/yt-dlp_linux > yt-dlp && chmod +x yt-dlp
+  curl -L https://github.com/yt-dlp/yt-dlp/releases/download/$YTDLP_VERSION/yt-dlp_linux > yt-dlp && chmod +x yt-dlp && \
+  rm -rf /var/lib/apt/lists/*
 
 # Based on: https://github.com/zarmory/docker-python-minimal/blob/master/Dockerfile
-# Removes Python build and developmenttools like pip.
+# Removes Python build and development tools like pip.
 FROM bitnami/minideb:trixie AS python-builder
 RUN apt-get update && apt-get install -y python3-minimal binutils && \
   rm -rf /usr/local/lib/python*/ensurepip && \
@@ -45,11 +47,12 @@ RUN apt-get update && apt-get install -y python3-minimal binutils && \
   rm -rf /usr/local/lib/python*/distutils/command && \
   rm -rf /usr/local/lib/python*/lib2to2 && \
   rm -rf /usr/local/lib/python*/__pycache__/* && \
-  find /usr/local/bin -not -name 'python*' \( -type f -o -type l \) -exec rm {} \;&& \
-  rm -rf /usr/local/share/*
+  find /usr/local/bin -not -name 'python*' \( -type f -o -type l \) -exec rm {} \; && \
+  rm -rf /usr/local/share/* && \
+  rm -rf /var/lib/apt/lists/*
 
 FROM bitnami/minideb:trixie AS runtime
-LABEL org.opencontainers.image.source="https://github.com/jontze/cadency-rs"
+LABEL org.opencontainers.image.source="https://github.com/BananikXenos/cadency-rs"
 WORKDIR /cadency
 COPY --from=builder /cadency/target/release/cadency cadency
 COPY --from=packages /packages /usr/bin
