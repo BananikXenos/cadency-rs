@@ -6,7 +6,7 @@ pub enum CadencyError {
     #[error("Missing environment variable '{0}'")]
     Environment(String),
     #[error("Failed to start cadency")]
-    Start { source: serenity::Error },
+    Start { source: Box<serenity::Error> },
     #[error("Runtime error: {0}")]
     Runtime(String),
     #[error("Failed to join a voice channel")]

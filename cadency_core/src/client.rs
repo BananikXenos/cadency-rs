@@ -42,17 +42,18 @@ impl Cadency {
             .type_map_insert::<HttpClientKey>(reqwest::Client::new())
             .type_map_insert::<CommandsScope>(self.commands_scope)
             .await
-            .map_err(|err| CadencyError::Start { source: err })?;
+            .map_err(|err| CadencyError::Start {
+                source: Box::new(err),
+            })?;
 
         // Keep a handle to the shard manager so we can shut down gracefully on Ctrl+C
         let shard_manager = client.shard_manager.clone();
 
         // Run the client's start future in a background task so we can await a signal concurrently
         let client_task = tokio::spawn(async move {
-            client
-                .start()
-                .await
-                .map_err(|err| CadencyError::Start { source: err })
+            client.start().await.map_err(|err| CadencyError::Start {
+                source: Box::new(err),
+            })
         });
 
         // Use ctrlc crate to listen for SIGINT (cross-platform). We'll notify via a oneshot.

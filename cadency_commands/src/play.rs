@@ -46,7 +46,7 @@ impl CadencyCommand for Play {
                     let is_playlist: bool = valid_url
                         .query_pairs()
                         .find(|(key, _)| key == "list")
-                        .map_or(false, |_| true);
+                        .is_some_and(|_| true);
                     (true, is_playlist)
                 });
             (query, is_valid_url, is_playlist)

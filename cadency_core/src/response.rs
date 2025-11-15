@@ -35,10 +35,10 @@ impl ResponseBuilder {
 }
 
 impl Response {
-    pub async fn submit<'a>(
+    pub async fn submit(
         self,
         ctx: &Context,
-        command: &'a mut CommandInteraction,
+        command: &mut CommandInteraction,
     ) -> Result<(), CadencyError> {
         match self.timing {
             // Create a regular text response that might has embeds
