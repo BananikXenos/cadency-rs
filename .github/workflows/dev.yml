@@ -17,7 +17,7 @@ jobs:
     name: Publish dev image
     uses: ./.github/workflows/image.yml
     with:
-      user: jontze
+      user: ${{ github.repository_owner }}
       push: true
       cache_tag: develop
     secrets: inherit

@@ -18,7 +18,7 @@ jobs:
     name: Publish main image
     uses: ./.github/workflows/image.yml
     with:
-      user: jontze
+      user: ${{ github.repository_owner }}
       push: true
     secrets: inherit
 

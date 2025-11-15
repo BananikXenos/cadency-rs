@@ -23,11 +23,11 @@ jobs:
           ssh-key: ${{ secrets.CI_TAG_DEPLOY_KEY }}
           fetch-depth: 0
       - name: Fetch tags
-        run: git fetch --tags   
-      - name: Setup Conventional Versioning
-        uses: jontze/.workflows/setup-conventional-versioning@main
+        run: git fetch --tags
+      - name: Install git-cliff for versioning
+        uses: taiki-e/install-action@v2
         with:
-          version: v0.1.0
+          tool: git-cliff
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-binstall
@@ -37,7 +37,11 @@ jobs:
       - name: Specify next version
         id: next
         run: |
-          echo "version=$(conventional-versioning -o plain)" >> $GITHUB_OUTPUT
+          # Get the latest tag or default to 0.0.0
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          # Use git-cliff to bump version based on conventional commits
+          NEXT_VERSION=$(git-cliff --bumped-version 2>/dev/null || echo "${LATEST_TAG#v}")
+          echo "version=${NEXT_VERSION#v}" >> $GITHUB_OUTPUT
       - name: Set Cargo version
         run: |
           cargo set-version ${{ steps.next.outputs.version }}
@@ -61,7 +65,7 @@ jobs:
     name: Publish Main image
     uses: ./.github/workflows/image.yml
     with:
-      user: jontze
+      user: ${{ github.repository_owner }}
       push: true
       cache_tag: main
     secrets: inherit      
