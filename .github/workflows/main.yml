@@ -37,14 +37,32 @@ jobs:
       - name: Specify next version
         id: next
         run: |
-          # Get the latest tag or default to 0.0.0
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          # Use git-cliff to bump version based on conventional commits
-          NEXT_VERSION=$(git-cliff --bumped-version 2>/dev/null || echo "${LATEST_TAG#v}")
+          # Get current version from Cargo.toml
+          CURRENT_VERSION=$(grep '^version' cadency/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Try to get bumped version from git-cliff based on conventional commits
+          NEXT_VERSION=$(git-cliff --bumped-version 2>/dev/null || echo "")
+          
+          # If git-cliff fails or returns empty, keep current version
+          if [ -z "$NEXT_VERSION" ] || [ "$NEXT_VERSION" = "null" ]; then
+            echo "No version bump needed, keeping current version: $CURRENT_VERSION"
+            NEXT_VERSION="$CURRENT_VERSION"
+          fi
+          
+          echo "Next version: $NEXT_VERSION"
           echo "version=${NEXT_VERSION#v}" >> $GITHUB_OUTPUT
       - name: Set Cargo version
         run: |
-          cargo set-version ${{ steps.next.outputs.version }}
+          CURRENT_VERSION=$(grep '^version' cadency/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          NEXT_VERSION="${{ steps.next.outputs.version }}"
+          
+          if [ "$CURRENT_VERSION" != "$NEXT_VERSION" ]; then
+            echo "Bumping version from $CURRENT_VERSION to $NEXT_VERSION"
+            cargo set-version $NEXT_VERSION
+          else
+            echo "Version unchanged: $CURRENT_VERSION"
+          fi
       - name: Commit Version Bump (if changed)
         uses: stefanzweifel/git-auto-commit-action@v7
         id: commit
