@@ -24,7 +24,7 @@ The recommended way to install and run **Cadency-rs** is with Docker, as the Doc
 1. Pull the image from the **ghcr.io** registry (`main` pulls the latest stable build, `develop` latest development build, `vX.X.X` pulls a fixed version)
 
 ```sh
-docker pull ghcr.io/jontze/cadency_rs:main
+docker pull ghcr.io/BananikXenos/cadency_rs:main
 ```
 
 2. Start a container and pass your discord bot token to the container by setting the `DISCORD_TOKEN` environment variable and optional specify the log level e.g. `RUST_LOG="cadency=debug"`.
@@ -43,7 +43,7 @@ Cadency requires the `bot` **scope** and several permissions on a server to work
 Replace the TOKEN_HERE with your token:
 
 ```sh
-docker run --name cadency_rs -d -it --rm -e DISCORD_TOKEN=DISCORD_TOKEN_HERE ghcr.io/jontze/cadency_rs:main
+docker run --name cadency_rs -d -it --rm -e DISCORD_TOKEN=DISCORD_TOKEN_HERE ghcr.io/BananikXenos/cadency_rs:main
 ```
 
 This runs the container in detatched mode (background) and removes it when it stops running. This makes sure that you are always using an up-to-date version of cadency-rs.  

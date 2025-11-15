@@ -4,7 +4,7 @@ version = "0.7.0"
 edition = "2021"
 description = "Library with codegen macros for the cadency discord bot"
 license = "MIT"
-repository = "https://github.com/jontze/cadency-rs"
+repository = "https://github.com/BananikXenos/cadency-rs"
 
 [lib]
 proc-macro = true

@@ -1,6 +1,6 @@
 image:
   # name of the image to use
-  name: ghcr.io/jontze/cadency_rs
+  name: ghcr.io/BananikXenos/cadency_rs
   pullPolicy: IfNotPresent
   # tag Overrides the image tag whose default is the chart appVersion.
   tag: ""

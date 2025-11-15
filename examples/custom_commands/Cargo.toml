@@ -4,7 +4,7 @@ version = "0.7.0"
 edition = "2021"
 description = "An example how to integrate custom commands into cadency_rs"
 license = "MIT"
-repository = "https://github.com/jontze/cadency-rs"
+repository = "https://github.com/BananikXenos/cadency-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
