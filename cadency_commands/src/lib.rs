@@ -33,6 +33,8 @@ mod track_loop;
 pub use track_loop::TrackLoop;
 mod roll;
 pub use roll::Roll;
+mod anime;
+pub use anime::Anime;
 
 #[cfg(test)]
 mod test {

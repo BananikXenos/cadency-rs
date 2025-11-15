@@ -108,6 +108,7 @@ pub(crate) async fn setup_commands(ctx: &Context) -> Result<(), serenity::Error>
 
     // No need to run this in parallel as serenity will enforce one-by-one execution
     for command in &commands {
+        info!("Registering command: {}", command.name());
         command.register(ctx, commands_scope).await?;
     }
     Ok(())
