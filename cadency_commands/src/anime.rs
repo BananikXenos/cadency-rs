@@ -2,7 +2,9 @@ use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::{
+    async_trait, client::Context, model::application::CommandInteraction, model::channel::Channel,
+};
 
 #[derive(Default, CommandBaseline)]
 #[description = "Send a random anime image"]
@@ -72,6 +74,18 @@ impl Anime {
         Ok(tags)
     }
 
+    async fn is_channel_nsfw(ctx: &Context, command: &CommandInteraction) -> bool {
+        let Ok(channel) = command.channel_id.to_channel(ctx).await else {
+            return false;
+        };
+
+        match channel {
+            Channel::Guild(ch) => ch.nsfw,
+            Channel::Private(_) => true,
+            _ => false,
+        }
+    }
+
     async fn request_anime_image_url(
         rating: String,
         tags: Option<Vec<String>>,
@@ -97,17 +111,17 @@ impl Anime {
 impl CadencyCommand for Anime {
     async fn execute<'a>(
         &self,
-        _ctx: &Context,
-        _command: &'a mut CommandInteraction,
+        ctx: &Context,
+        command: &'a mut CommandInteraction,
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
         let rating = self
-            .arg_rating(_command)
+            .arg_rating(command)
             .unwrap_or_else(|| "safe".to_string());
         let rating =
             Self::validate_rating(&rating).map_err(|err| CadencyError::Command { message: err })?;
 
-        let tags = if let Some(tags_str) = self.arg_tags(_command) {
+        let tags = if let Some(tags_str) = self.arg_tags(command) {
             Some(
                 Self::validate_tags(&tags_str)
                     .map_err(|err| CadencyError::Command { message: err })?,
@@ -115,6 +129,12 @@ impl CadencyCommand for Anime {
         } else {
             None
         };
+
+        if rating != "safe" && !Self::is_channel_nsfw(ctx, command).await {
+            return Err(CadencyError::Command {
+                message: "**NSFW content is not allowed in this channel**".to_string(),
+            });
+        }
 
         let anime_url = Self::request_anime_image_url(rating, tags)
             .await

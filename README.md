@@ -15,6 +15,7 @@ A discord bot that's using **slash commands** written in **Rust** with the help 
 - Calculate a number in the **fibonacci** sequence
 - Roll a **dice** e.g. `2d6+3`
 - And play a classic game of **ping pong**
+- Show some Anime **waifus** or **husbandos**
 
 ## Installation
 
