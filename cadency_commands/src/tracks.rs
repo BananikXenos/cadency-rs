@@ -1,6 +1,6 @@
 use cadency_core::{
     response::{Response, ResponseBuilder},
-    utils::{self, voice::TrackMetaKey},
+    utils,
     CadencyCommand, CadencyError,
 };
 use serenity::{
@@ -9,7 +9,7 @@ use serenity::{
     client::Context,
     model::{application::CommandInteraction, Color},
 };
-use songbird::tracks::LoopState;
+use songbird::{input::AuxMetadata, tracks::LoopState};
 
 #[derive(CommandBaseline, Default)]
 #[description = "List all tracks in the queue"]
@@ -41,14 +41,10 @@ impl CadencyCommand for Tracks {
                 .title("Track List");
             for (index, track) in queue_snapshot.into_iter().enumerate() {
                 let track_position = index + 1;
-                // Extract title and url of the track. This is scoped to drop the read lock on
-                // the track meta as soon as possible.
+                // Extract title and url of the track
                 let (title, url, loop_state) = {
-                    // Extract track Metadata from tracks TyeMap
-                    let track_map = track.typemap().read().await;
-                    let metadata = track_map
-                        .get::<TrackMetaKey>()
-                        .expect("Metadata to be present in track map");
+                    // Extract track Metadata from track data
+                    let metadata = track.data::<AuxMetadata>();
                     let title = metadata
                         .title
                         .as_ref()

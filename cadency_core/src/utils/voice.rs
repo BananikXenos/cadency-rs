@@ -9,17 +9,11 @@ use serenity::{
     model::application::CommandInteraction,
 };
 use songbird::{
-    input::{AuxMetadata, Input, YoutubeDl},
-    tracks::TrackHandle,
-    typemap::TypeMapKey,
+    input::{Input, YoutubeDl},
+    tracks::{Track, TrackHandle},
     Songbird,
 };
 
-pub struct TrackMetaKey;
-
-impl TypeMapKey for TrackMetaKey {
-    type Value = AuxMetadata;
-}
 
 pub fn get_active_voice_channel_id(
     guild: CacheRef<'_, GuildId, Guild, Infallible>,
@@ -101,13 +95,9 @@ pub async fn add_song(
     let mut input: Input = source.into();
     let metadata = input.aux_metadata().await?;
 
-    let track_handle = handler.enqueue_input(input).await;
-    // Store the metadata for later use
-    track_handle
-        .typemap()
-        .write()
-        .await
-        .insert::<TrackMetaKey>(metadata.clone());
+    // Create track with metadata as user data
+    let track = Track::new_with_data(input, std::sync::Arc::new(metadata.clone()));
+    let track_handle = handler.enqueue(track).await;
 
     Ok((metadata, track_handle))
 }
