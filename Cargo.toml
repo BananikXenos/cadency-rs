@@ -41,3 +41,6 @@ features = ["rustls-tls", "json"]
 [workspace.dependencies.symphonia]
 version = "0.5.5"
 features = ["all-formats"]
+
+[workspace.dependencies.ctrlc]
+version = "3"

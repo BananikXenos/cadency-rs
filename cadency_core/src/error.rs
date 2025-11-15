@@ -7,6 +7,8 @@ pub enum CadencyError {
     Environment(String),
     #[error("Failed to start cadency")]
     Start { source: serenity::Error },
+    #[error("Runtime error: {0}")]
+    Runtime(String),
     #[error("Failed to join a voice channel")]
     Join,
     #[error("Response failed")]
