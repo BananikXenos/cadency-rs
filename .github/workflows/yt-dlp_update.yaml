@@ -21,7 +21,7 @@ jobs:
     name: Update Version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Update .yt-dlprc
         run: |
           rm $YTDLP_VERSION_FILE
