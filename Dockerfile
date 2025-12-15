@@ -1,4 +1,4 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.91.1-slim-trixie AS build_base
+FROM lukemathwalker/cargo-chef:latest-rust-1.92.0-slim-trixie AS build_base
 # Install cmake once in base layer for reuse across all build stages
 RUN apt-get update && apt-get install -y cmake && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
