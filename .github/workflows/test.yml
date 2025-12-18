@@ -32,7 +32,7 @@ jobs:
       - name: Setup yt-dlp
         run: |
           VERSION=$(cat .yt-dlprc)
-          wget https://github.com/yt-dlp/yt-dlp/releases/download/$VERSION/yt-dlp 
+          wget https://github.com/yt-dlp/yt-dlp/releases/download/$VERSION/yt-dlp
           chmod a+x yt-dlp
           mv yt-dlp /usr/local/bin
           yt-dlp --version

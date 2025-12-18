@@ -9,7 +9,7 @@ jobs:
     name: Test Dev branch
     uses: ./.github/workflows/test.yml
   publish_image:
-    permissions: 
+    permissions:
       contents: read
       packages: write
     needs:

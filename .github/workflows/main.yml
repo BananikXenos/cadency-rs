@@ -3,18 +3,16 @@ on:
   push:
     branches:
       - main
-    paths-ignore: 
-      - 'helm/**'
 
 jobs:
   test_branch:
     name: Test Main
     uses: ./.github/workflows/test.yml
-  
+
   next_version:
     name: Next Version
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - test_branch
     steps:
       - name: Checkout with deploy key
@@ -51,9 +49,9 @@ jobs:
         run: |
           git tag v${{ steps.next.outputs.version }}
           git push origin v${{ steps.next.outputs.version }}
-  
+
   publish_main_image:
-    permissions: 
+    permissions:
       contents: read
       packages: write
     needs:
@@ -64,4 +62,4 @@ jobs:
       user: ${{ github.repository_owner }}
       push: true
       cache_tag: main
-    secrets: inherit      
+    secrets: inherit
