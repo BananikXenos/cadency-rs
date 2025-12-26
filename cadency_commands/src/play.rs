@@ -4,8 +4,8 @@ use cadency_core::{
     utils, CadencyCommand, CadencyError,
 };
 use reqwest::Url;
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use songbird::events::Event;
 
 #[derive(CommandBaseline)]
@@ -56,8 +56,12 @@ impl CadencyCommand for Play {
         let (manager, call, guild_id) = utils::voice::join(ctx, command).await?;
 
         let response_builder = if is_playlist {
-            let playlist_items = cadency_yt_playlist::fetch_playlist_songs(search_payload.clone()).unwrap();
-            playlist_items.messages.iter().for_each(|entry| debug!("🚧 Unable to parse song from playlist: {entry:?}",));
+            let playlist_items =
+                cadency_yt_playlist::fetch_playlist_songs(search_payload.clone()).unwrap();
+            playlist_items
+                .messages
+                .iter()
+                .for_each(|entry| debug!("🚧 Unable to parse song from playlist: {entry:?}",));
             let songs = playlist_items.data;
             let mut amount_added_playlist_songs = 0;
             let mut amount_total_added_playlist_duration = 0_f32;
@@ -65,7 +69,9 @@ impl CadencyCommand for Play {
             let mut skipped_unavailable = 0;
 
             for song in songs {
-                if amount_added_playlist_songs <= self.playlist_song_limit && song.duration <= self.song_length_limit {
+                if amount_added_playlist_songs <= self.playlist_song_limit
+                    && song.duration <= self.song_length_limit
+                {
                     match utils::voice::add_song(ctx, call.clone(), song.url, true).await {
                         Ok((added_song_meta, _)) => {
                             amount_added_playlist_songs += 1;
@@ -94,7 +100,11 @@ impl CadencyCommand for Play {
             let mut description = format!(
                 "✅ **Added {} song{} to the queue**\n⏱️ **Total Duration:** {:.1} minutes",
                 amount_added_playlist_songs,
-                if amount_added_playlist_songs == 1 { "" } else { "s" },
+                if amount_added_playlist_songs == 1 {
+                    ""
+                } else {
+                    "s"
+                },
                 amount_total_added_playlist_duration
             );
 
@@ -120,12 +130,10 @@ impl CadencyCommand for Play {
                 .title("📋 Playlist Added")
                 .color(Colour::from_rgb(0, 255, 127)) // Spring green
                 .description(description)
-                .footer(serenity::all::CreateEmbedFooter::new(
-                    format!("Playlist limit: {} songs, {} seconds per song",
-                            self.playlist_song_limit,
-                            self.song_length_limit as i32
-                    )
-                ));
+                .footer(serenity::all::CreateEmbedFooter::new(format!(
+                    "Playlist limit: {} songs, {} seconds per song",
+                    self.playlist_song_limit, self.song_length_limit as i32
+                )));
             response_builder.embeds(vec![embed])
         } else {
             let (added_song_meta, _) = utils::voice::add_song(ctx, call.clone(), search_payload.clone(), is_url)
@@ -153,11 +161,17 @@ impl CadencyCommand for Play {
                 );
             }
 
-            let title = added_song_meta.title.as_ref().map_or("Unknown Title", |title| title);
+            let title = added_song_meta
+                .title
+                .as_ref()
+                .map_or("Unknown Title", |title| title);
             let song_url = if is_url {
                 search_payload.clone()
             } else {
-                added_song_meta.source_url.as_ref().map_or("Unknown URL".to_string(), |url| url.to_owned())
+                added_song_meta
+                    .source_url
+                    .as_ref()
+                    .map_or("Unknown URL".to_string(), |url| url.to_owned())
             };
 
             let mut description = format!("🎵 **Title:** `{}`", title);

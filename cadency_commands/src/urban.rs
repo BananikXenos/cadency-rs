@@ -3,10 +3,7 @@ use cadency_core::{
     CadencyCommand, CadencyError,
 };
 use serenity::{
-    async_trait,
-    builder::CreateEmbed,
-    client::Context,
-    model::application::CommandInteraction,
+    async_trait, builder::CreateEmbed, client::Context, model::application::CommandInteraction,
     model::colour::Colour,
 };
 
@@ -126,11 +123,15 @@ impl CadencyCommand for Urban {
             .map_err(|err| {
                 error!("Failed to request urban dictionary entries : {:?}", err);
                 CadencyError::Command {
-                    message: "❌ **Failed to request urban dictionary**\n\nPlease try again later.".to_string(),
+                    message: "❌ **Failed to request urban dictionary**\n\nPlease try again later."
+                        .to_string(),
                 }
             })?;
         let response_builder = if urbans.is_empty() {
-            respone_builder.message(Some(format!("❌ **Nothing found for \"{}\"**\n\nTry a different search term!", query)))
+            respone_builder.message(Some(format!(
+                "❌ **Nothing found for \"{}\"**\n\nTry a different search term!",
+                query
+            )))
         } else {
             respone_builder.embeds(Self::create_embed(urbans))
         };

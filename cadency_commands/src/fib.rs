@@ -1,10 +1,10 @@
-use num_bigint::BigUint;
 use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use num_bigint::BigUint;
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 
 #[derive(CommandBaseline, Default)]
 #[description = "Calculate the nth number in the fibonacci sequence"]
@@ -50,10 +50,7 @@ impl CadencyCommand for Fib {
         let n = self.arg_number(command);
         let fib_value = Self::calc(&n)?;
 
-        let description = format!(
-            "🔢 **Position:** {}\n📊 **Result:** `{}`",
-            n, fib_value
-        );
+        let description = format!("🔢 **Position:** {}\n📊 **Result:** `{}`", n, fib_value);
 
         let embed = serenity::builder::CreateEmbed::default()
             .title("🧮 Fibonacci Calculator")

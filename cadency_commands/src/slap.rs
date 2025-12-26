@@ -1,10 +1,10 @@
-use std::num::NonZeroU64;
 use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use std::num::NonZeroU64;
 
 #[derive(CommandBaseline, Default)]
 #[description = "Slap someone with a large trout!"]

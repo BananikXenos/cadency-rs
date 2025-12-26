@@ -3,10 +3,7 @@ use cadency_core::{
     utils, CadencyCommand, CadencyError,
 };
 use serenity::{
-    async_trait,
-    builder::CreateEmbed,
-    client::Context,
-    model::application::CommandInteraction,
+    async_trait, builder::CreateEmbed, client::Context, model::application::CommandInteraction,
     model::colour::Colour,
 };
 use songbird::{input::AuxMetadata, tracks::LoopState};
@@ -33,7 +30,9 @@ impl CadencyCommand for Tracks {
         })?;
         let handler = call.lock().await;
         let response_builder = if handler.queue().is_empty() {
-            response_builder.message(Some("❌ **No tracks in the queue**\n\nUse `/play` to add some music!".to_string()))
+            response_builder.message(Some(
+                "❌ **No tracks in the queue**\n\nUse `/play` to add some music!".to_string(),
+            ))
         } else {
             let queue_snapshot = handler.queue().current_queue();
             let mut embeded_tracks = CreateEmbed::default()
@@ -45,14 +44,8 @@ impl CadencyCommand for Tracks {
                 let track_position = index + 1;
                 let (title, url, loop_state) = {
                     let metadata = track.data::<AuxMetadata>();
-                    let title = metadata
-                        .title
-                        .as_ref()
-                        .map_or("Unknown Title", |t| t);
-                    let url = metadata
-                        .source_url
-                        .as_ref()
-                        .map_or("No URL", |u| u);
+                    let title = metadata.title.as_ref().map_or("Unknown Title", |t| t);
+                    let url = metadata.source_url.as_ref().map_or("No URL", |u| u);
                     let track_info = track.get_info().await.unwrap();
                     (title.to_owned(), url.to_owned(), track_info.loops)
                 };

@@ -2,8 +2,8 @@ use cadency_core::{
     response::{Response, ResponseBuilder},
     utils, CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 
 #[derive(Default, CommandBaseline)]
 #[name = "loop"]
@@ -81,7 +81,9 @@ impl CadencyCommand for TrackLoop {
                     message: "❌ **Could not loop track**".to_string(),
                 }
             })?;
-            embed = embed.description("✅ **Loop Enabled**\n\n🔁 The current track will loop **infinitely**.");
+            embed = embed.description(
+                "✅ **Loop Enabled**\n\n🔁 The current track will loop **infinitely**.",
+            );
         }
         Ok(response_builder.embeds(vec![embed]).build()?)
     }

@@ -3,10 +3,11 @@ use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
-use serenity::{
-    async_trait, client::Context, model::application::CommandInteraction, model::channel::Channel, model::colour::Colour,
-};
 use serenity::all::CreateEmbedFooter;
+use serenity::{
+    async_trait, client::Context, model::application::CommandInteraction, model::channel::Channel,
+    model::colour::Colour,
+};
 use std::str::FromStr;
 
 const TAG_DISPLAY_LIMIT: usize = 10;
@@ -202,7 +203,8 @@ impl CadencyCommand for Anime {
 
         // Tags
         if !image.tags.is_empty() {
-            let tags_display = image.tags
+            let tags_display = image
+                .tags
                 .iter()
                 .take(TAG_DISPLAY_LIMIT) // Limit to first 10 tags to avoid too long descriptions
                 .map(|t| format!("`{}`", t))
@@ -210,7 +212,10 @@ impl CadencyCommand for Anime {
                 .join(", ");
             description.push_str(&format!("🏷️ **Tags:** {}", tags_display));
             if image.tags.len() > TAG_DISPLAY_LIMIT {
-                description.push_str(&format!(" *+{} more*", image.tags.len() - TAG_DISPLAY_LIMIT));
+                description.push_str(&format!(
+                    " *+{} more*",
+                    image.tags.len() - TAG_DISPLAY_LIMIT
+                ));
             }
             description.push('\n');
         }

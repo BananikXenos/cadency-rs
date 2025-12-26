@@ -2,8 +2,8 @@ use cadency_core::{
     response::{Response, ResponseBuilder},
     utils, CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 
 #[derive(CommandBaseline, Default)]
 #[description = "Skip current song"]

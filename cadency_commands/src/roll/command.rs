@@ -3,8 +3,8 @@ use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 
 #[derive(CommandBaseline, Default)]
 #[description = "Roll a dice of n sides"]
@@ -30,17 +30,14 @@ impl CadencyCommand for Roll {
         throw.validate()?;
         let roll = throw.roll();
 
-        let description = format!(
-            "🎲 **Roll:** `{}`\n🎯 **Result:** **{}**",
-            throw_str, roll
-        );
+        let description = format!("🎲 **Roll:** `{}`\n🎯 **Result:** **{}**", throw_str, roll);
 
         let embed = serenity::builder::CreateEmbed::default()
             .title("🎲 Dice Roll")
             .color(Colour::from_rgb(138, 43, 226)) // Blue violet
             .description(description)
             .footer(serenity::all::CreateEmbedFooter::new(
-                "Supported formats: d6, 2d6, 2d6+1, 2d6-1"
+                "Supported formats: d6, 2d6, 2d6+1, 2d6-1",
             ));
         Ok(response_builder.embeds(vec![embed]).build()?)
     }

@@ -2,8 +2,8 @@ use cadency_core::{
     response::{Response, ResponseBuilder},
     utils, CadencyCommand, CadencyError,
 };
-use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 use serenity::model::colour::Colour;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
 
 #[derive(CommandBaseline, Default)]
 #[description = "Pause the current song"]
@@ -42,7 +42,9 @@ impl CadencyCommand for Pause {
             let embed = serenity::builder::CreateEmbed::default()
                 .title("⏸️ Pause")
                 .color(Colour::from_rgb(255, 165, 0)) // Orange
-                .description("✅ **Paused**\n\nPlayback has been paused. Use `/resume` to continue.");
+                .description(
+                    "✅ **Paused**\n\nPlayback has been paused. Use `/resume` to continue.",
+                );
             Ok(response_builder.embeds(vec![embed]).build()?)
         }
     }
