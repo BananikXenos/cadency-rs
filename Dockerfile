@@ -29,13 +29,21 @@ ENV CARGO_TERM_COLOR=always
 # Build and cache only the cadency app with the previously built dependencies
 RUN cargo build --release --bin cadency
 
-# Downloads yt-dlp
+# Downloads yt-dlp and Deno runtime
 FROM bitnami/minideb:trixie AS packages
 WORKDIR /packages
-COPY .yt-dlprc .
+COPY .yt-dlprc .denorc ./
+
+# Download yt-dlp and Deno
 RUN YTDLP_VERSION=$(cat .yt-dlprc) && \
-  apt-get update && apt-get install -y curl && \
-  curl -L https://github.com/yt-dlp/yt-dlp/releases/download/$YTDLP_VERSION/yt-dlp_linux > yt-dlp && chmod +x yt-dlp && \
+  apt-get update && apt-get install -y curl unzip && \
+  curl -L https://github.com/yt-dlp/yt-dlp/releases/download/$YTDLP_VERSION/yt-dlp_linux > yt-dlp && \
+  chmod +x yt-dlp && \
+  DENO_VERSION=$(cat .denorc) && \
+  curl -fsSL https://github.com/denoland/deno/releases/download/${DENO_VERSION}/deno-x86_64-unknown-linux-gnu.zip -o deno.zip && \
+  unzip deno.zip && \
+  chmod +x deno && \
+  rm deno.zip && \
   rm -rf /var/lib/apt/lists/*
 
 # Based on: https://github.com/zarmory/docker-python-minimal/blob/master/Dockerfile
@@ -55,6 +63,7 @@ FROM bitnami/minideb:trixie AS runtime
 LABEL org.opencontainers.image.source="https://github.com/BananikXenos/cadency-rs"
 WORKDIR /cadency
 COPY --from=builder /cadency/target/release/cadency cadency
-COPY --from=packages /packages /usr/bin
+COPY --from=packages /packages/yt-dlp /usr/local/bin/yt-dlp
+COPY --from=packages /packages/deno /usr/local/bin/deno
 COPY --from=python-builder /usr/local/ /usr/local/
 CMD [ "./cadency" ]

@@ -3,6 +3,7 @@ use cadency_core::{
     utils, CadencyCommand, CadencyError,
 };
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 use songbird::{input::AuxMetadata, tracks::LoopState};
 
 #[derive(CommandBaseline, Default)]
@@ -18,43 +19,44 @@ impl CadencyCommand for Now {
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
         let guild_id = command.guild_id.ok_or(CadencyError::Command {
-            message: ":x: **This command can only be executed on a server**".to_string(),
+            message: "❌ **This command can only be executed on a server**".to_string(),
         })?;
         let manager = utils::voice::get_songbird(ctx).await;
         let call = manager.get(guild_id).ok_or(CadencyError::Command {
-            message: ":x: **No active voice session on the server**".to_string(),
+            message: "❌ **No active voice session on the server**".to_string(),
         })?;
         let handler = call.lock().await;
         let track = handler.queue().current().ok_or(CadencyError::Command {
-            message: ":x: **No song is playing**".to_string(),
+            message: "❌ **No song is playing**".to_string(),
         })?;
 
-        // Extract Loop State from Track
+        let metadata = track.data::<AuxMetadata>();
         let loop_state = track.get_info().await.unwrap().loops;
 
-        // Create message from track metadata
-        let message = {
-            let metadata = track.data::<AuxMetadata>();
+        let default_title = "Unknown Song".to_string();
+        let title = metadata.title.as_ref().unwrap_or(&default_title);
+        let url = metadata.source_url.as_ref();
 
-            metadata.title.as_ref().map_or(
-                String::from(":x: **Could not add audio source to the queue!**"),
-                |title| {
-                    let mut track_info = format!(":newspaper: `{title}`");
-                    match loop_state {
-                        LoopState::Infinite => {
-                            track_info.push_str("\n:repeat: `Infinite`");
-                        }
-                        LoopState::Finite(loop_amount) => {
-                            if loop_amount > 0 {
-                                track_info.push_str(&format!("\n:repeat: `{}`", loop_amount));
-                            }
-                        }
-                    }
-                    track_info
-                },
-            )
-        };
+        let mut description = format!("🎵 **Now Playing:** `{}`", title);
 
-        Ok(response_builder.message(Some(message)).build()?)
+        if let Some(url) = url {
+            description.push_str(&format!("\n🔗 **Link:** [View Source]({})", url));
+        }
+
+        match loop_state {
+            LoopState::Infinite => {
+                description.push_str("\n🔁 **Loop:** Infinite");
+            }
+            LoopState::Finite(count) if count > 0 => {
+                description.push_str(&format!("\n🔁 **Loop:** {} times remaining", count));
+            }
+            _ => {}
+        }
+
+        let embed = serenity::builder::CreateEmbed::default()
+            .title("🎧 Now Playing")
+            .color(Colour::from_rgb(255, 110, 64)) // Coral
+            .description(description);
+        Ok(response_builder.embeds(vec![embed]).build()?)
     }
 }

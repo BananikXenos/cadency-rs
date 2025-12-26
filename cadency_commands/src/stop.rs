@@ -3,6 +3,7 @@ use cadency_core::{
     utils, CadencyCommand, CadencyError,
 };
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 
 #[derive(CommandBaseline, Default)]
 #[description = "Stop music and clear the track list"]
@@ -18,20 +19,28 @@ impl CadencyCommand for Stop {
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
         let guild_id = command.guild_id.ok_or(CadencyError::Command {
-            message: ":x: **This command can only be executed on a server**".to_string(),
+            message: "❌ **This command can only be executed on a server**".to_string(),
         })?;
         let manager = utils::voice::get_songbird(ctx).await;
         let call = manager.get(guild_id).ok_or(CadencyError::Command {
-            message: ":x: **No active voice session on the server**".to_string(),
+            message: "❌ **No active voice session on the server**".to_string(),
         })?;
 
         let handler = call.lock().await;
-        let response_builder = if handler.queue().is_empty() {
-            response_builder.message(Some(":x: **Nothing to stop**".to_string()))
+
+        let embed = if handler.queue().is_empty() {
+            serenity::builder::CreateEmbed::default()
+                .title("🛑 Stop & Clear")
+                .color(Colour::from_rgb(255, 69, 0)) // Orange red
+                .description("❌ **Nothing to stop**\n\nThere are no tracks in the queue.")
         } else {
             handler.queue().stop();
-            response_builder.message(Some(":white_check_mark: :wastebasket: **Successfully stopped and cleared the playlist**".to_string()))
+            serenity::builder::CreateEmbed::default()
+                .title("🛑 Stop & Clear")
+                .color(Colour::from_rgb(255, 69, 0)) // Orange red
+                .description("✅ **Stopped**\n\nCleared the queue and stopped playback.")
         };
-        Ok(response_builder.build()?)
+
+        Ok(response_builder.embeds(vec![embed]).build()?)
     }
 }

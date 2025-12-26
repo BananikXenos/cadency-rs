@@ -3,6 +3,7 @@ use cadency_core::{
     CadencyCommand, CadencyError,
 };
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 
 #[derive(CommandBaseline, Default)]
 #[description = "Say something really inspiring!"]
@@ -32,6 +33,12 @@ impl CadencyCommand for Inspire {
                 message: "**The source of my inspiration is currently unavailable :(**".to_string(),
             }
         })?;
-        Ok(response_builder.message(Some(inspire_url)).build()?)
+
+        let embed = serenity::builder::CreateEmbed::default()
+            .title("✨ Inspiration of the Day")
+            .color(Colour::from_rgb(255, 136, 0)) // Orange
+            .image(inspire_url)
+            .description("🌟 Let this inspire you on your journey!");
+        Ok(response_builder.embeds(vec![embed]).build()?)
     }
 }

@@ -1,11 +1,10 @@
+use std::num::NonZeroU64;
 use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
-use serenity::{
-    all::Mentionable, async_trait, client::Context, model::application::CommandInteraction,
-};
-use std::num::NonZeroU64;
+use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 
 #[derive(CommandBaseline, Default)]
 #[description = "Slap someone with a large trout!"]
@@ -24,26 +23,38 @@ impl CadencyCommand for Slap {
         command: &'a mut CommandInteraction,
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
-        let user_id = self.arg_target(command);
+        let target_id = self.arg_target(command);
+        let invoker_id = command.user.id;
+        let bot_id = command.application_id;
 
-        let response_builder = if user_id == command.user.id {
-            response_builder.message(Some(format!(
-                "**Why do you want to slap yourself, {}?**",
-                command.user.mention()
-            )))
-        } else if NonZeroU64::from(user_id) == NonZeroU64::from(command.application_id) {
-            response_builder.message(Some(format!(
-                "**Nope!\n{} slaps {} around a bit with a large trout!**",
-                user_id.mention(),
-                command.user.mention()
-            )))
+        let (title, description) = if target_id == invoker_id {
+            (
+                "🤔 Wait...",
+                format!("**Why do you want to slap yourself, <@{}>?**", invoker_id),
+            )
+        } else if NonZeroU64::from(target_id) == NonZeroU64::from(bot_id) {
+            (
+                "🛡️ Nice try!",
+                format!(
+                    "**Nope!**\n<@{}> slaps <@{}> around a bit with a large trout!",
+                    bot_id, invoker_id
+                ),
+            )
         } else {
-            response_builder.message(Some(format!(
-                "**{} slaps {} around a bit with a large trout!**",
-                command.user.mention(),
-                user_id.mention()
-            )))
+            (
+                "🖐️ Trout Slap!",
+                format!(
+                    "🐟 **<@{}>** slapped **<@{}>** with a big trout!\n\n*What did they do to deserve that?*",
+                    invoker_id, target_id
+                ),
+            )
         };
-        Ok(response_builder.build()?)
+
+        let embed = serenity::builder::CreateEmbed::default()
+            .title(title)
+            .color(Colour::from_rgb(255, 0, 127)) // Pink
+            .description(description);
+
+        Ok(response_builder.embeds(vec![embed]).build()?)
     }
 }

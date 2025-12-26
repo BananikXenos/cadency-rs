@@ -6,8 +6,8 @@ A discord bot that's using **slash commands** written in **Rust** with the help 
 
 ## Features
 
-- **Play songs** from Youtube using a url or a search phrase
-- Add complete Youtube **playlists** to the song queue
+- **Play songs** from YouTube using a url or a search phrase
+- Add complete YouTube **playlists** to the song queue
 - **Maintain a queue** of songs which you can **pause**, **skip**, **resume**, **loop**, ...
 - Look something up in the **Urban Dictionary**
 - Let **Cadency-rs** say something **inspiring**
@@ -46,7 +46,7 @@ Replace the TOKEN_HERE with your token:
 docker run --name cadency_rs -d -it --rm -e DISCORD_TOKEN=DISCORD_TOKEN_HERE ghcr.io/BananikXenos/cadency_rs:main
 ```
 
-This runs the container in detatched mode (background) and removes it when it stops running. This makes sure that you are always using an up-to-date version of cadency-rs.  
+This runs the container in detached mode (background) and removes it when it stops running. This makes sure that you are always using an up-to-date version of cadency-rs.  
 To stop the container, execute the following command and substitute ID for the id that was returned when running the docker run command:
 
 ```sh
@@ -65,7 +65,7 @@ docker stop ID
 ## Contributing
 
 1. Install the latest stable [rust toolchain](https://www.rust-lang.org/tools/install)
-2. Intall [yt-dlp](https://github.com/yt-dlp/yt-dlp#installation)
+2. Install [yt-dlp](https://github.com/yt-dlp/yt-dlp#installation)
 3. Clone the repository
 4. Create a [discord bot in the discord developer portal](https://discord.com/developers/docs/getting-started) so you can run the bot local on your computer
 5. Set the environment variables in your shell that are listed as example in [.env.example](./.env.example)

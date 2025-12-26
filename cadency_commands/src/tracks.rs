@@ -6,7 +6,8 @@ use serenity::{
     async_trait,
     builder::CreateEmbed,
     client::Context,
-    model::{application::CommandInteraction, Color},
+    model::application::CommandInteraction,
+    model::colour::Colour,
 };
 use songbird::{input::AuxMetadata, tracks::LoopState};
 
@@ -24,55 +25,62 @@ impl CadencyCommand for Tracks {
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
         let guild_id = command.guild_id.ok_or(CadencyError::Command {
-            message: ":x: **This command can only be executed on a server**".to_string(),
+            message: "❌ **This command can only be executed on a server**".to_string(),
         })?;
         let manager = utils::voice::get_songbird(ctx).await;
         let call = manager.get(guild_id).ok_or(CadencyError::Command {
-            message: ":x: **No active voice session on the server**".to_string(),
+            message: "❌ **No active voice session on the server**".to_string(),
         })?;
         let handler = call.lock().await;
         let response_builder = if handler.queue().is_empty() {
-            response_builder.message(Some(":x: **No tracks in the queue**".to_string()))
+            response_builder.message(Some("❌ **No tracks in the queue**\n\nUse `/play` to add some music!".to_string()))
         } else {
             let queue_snapshot = handler.queue().current_queue();
             let mut embeded_tracks = CreateEmbed::default()
-                .color(Color::BLURPLE)
-                .title("Track List");
+                .color(Colour::from_rgb(114, 137, 218)) // Discord blurple
+                .title("🎵 Track Queue")
+                .description(format!("📊 **Total Tracks:** {}", queue_snapshot.len()));
+
             for (index, track) in queue_snapshot.into_iter().enumerate() {
                 let track_position = index + 1;
-                // Extract title and url of the track
                 let (title, url, loop_state) = {
-                    // Extract track Metadata from track data
                     let metadata = track.data::<AuxMetadata>();
                     let title = metadata
                         .title
                         .as_ref()
-                        .map_or("**No title provided**", |t| t);
+                        .map_or("Unknown Title", |t| t);
                     let url = metadata
                         .source_url
                         .as_ref()
-                        .map_or("**No url provided**", |u| u);
-
-                    // Extract loop state from track state
+                        .map_or("No URL", |u| u);
                     let track_info = track.get_info().await.unwrap();
                     (title.to_owned(), url.to_owned(), track_info.loops)
                 };
-                let mut embed_value = format!(":notes: `{url}`");
+
+                let mut embed_value = if url != "No URL" {
+                    format!("🔗 [View Source]({})", url)
+                } else {
+                    "🔗 No URL available".to_string()
+                };
+
                 match loop_state {
                     LoopState::Infinite => {
-                        embed_value.push_str("\n:repeat: `Infinite`");
+                        embed_value.push_str("\n🔁 **Loop:** Infinite");
                     }
                     LoopState::Finite(loop_amount) => {
                         if loop_amount > 0 {
-                            embed_value.push_str(&format!("\n:repeat: `{}`", loop_amount));
+                            embed_value.push_str(&format!("\n🔁 **Loop:** {} times", loop_amount));
                         }
                     }
                 }
-                embeded_tracks = embeded_tracks.field(
-                    format!("{track_position}. :newspaper: `{title}`"),
-                    embed_value,
-                    false,
-                );
+
+                let field_name = if index == 0 {
+                    format!("▶️ {}. {}", track_position, title)
+                } else {
+                    format!("{}. {}", track_position, title)
+                };
+
+                embeded_tracks = embeded_tracks.field(field_name, embed_value, false);
             }
             response_builder.embeds(vec![embeded_tracks])
         };

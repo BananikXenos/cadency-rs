@@ -1,8 +1,10 @@
+use num_bigint::BigUint;
 use cadency_core::{
     response::{Response, ResponseBuilder},
     CadencyCommand, CadencyError,
 };
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 
 #[derive(CommandBaseline, Default)]
 #[description = "Calculate the nth number in the fibonacci sequence"]
@@ -14,12 +16,26 @@ use serenity::{async_trait, client::Context, model::application::CommandInteract
 pub struct Fib {}
 
 impl Fib {
-    fn calc(n: &i64) -> f64 {
-        let square_five = 5_f64.sqrt();
-        let phi = (1.0 + square_five) / 2.0;
-        // FIXME: Type conversion as f64 can lead to loss on large ints, find better way
-        let asymp = phi.powf(*n as f64) / square_five;
-        asymp.round()
+    fn calc(n: &i64) -> Result<BigUint, CadencyError> {
+        if *n < 0 {
+            return Err(CadencyError::Command {
+                message: "❌ **The number must be non-negative**".to_string(),
+            });
+        }
+
+        match *n {
+            0 => Ok(BigUint::from(0u32)),
+            1 => Ok(BigUint::from(1u32)),
+            _ => {
+                let (mut prev, mut curr) = (BigUint::from(0u32), BigUint::from(1u32));
+                for _ in 2..=*n {
+                    let next = &prev + &curr;
+                    prev = curr;
+                    curr = next;
+                }
+                Ok(curr)
+            }
+        }
     }
 }
 
@@ -31,7 +47,18 @@ impl CadencyCommand for Fib {
         command: &'a mut CommandInteraction,
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
-        let fib_msg = Self::calc(&self.arg_number(command)).to_string();
-        Ok(response_builder.message(Some(fib_msg)).build()?)
+        let n = self.arg_number(command);
+        let fib_value = Self::calc(&n)?;
+
+        let description = format!(
+            "🔢 **Position:** {}\n📊 **Result:** `{}`",
+            n, fib_value
+        );
+
+        let embed = serenity::builder::CreateEmbed::default()
+            .title("🧮 Fibonacci Calculator")
+            .color(Colour::from_rgb(30, 144, 255)) // Dodger blue
+            .description(description);
+        Ok(response_builder.embeds(vec![embed]).build()?)
     }
 }

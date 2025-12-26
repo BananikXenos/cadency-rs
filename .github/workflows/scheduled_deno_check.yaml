@@ -1,0 +1,49 @@
+name: Deno Updater
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 30 8 * * * # At 08:30 on every day
+
+jobs:
+  check:
+    name: Check Latest Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.latest.outputs.release }}
+      isNew: ${{ steps.summary.outputs.isNew }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Read current Deno Version
+        id: current
+        run: |
+          echo "version=$(cat .denorc)" >> $GITHUB_OUTPUT
+      - name: Latest Release
+        id: latest
+        uses: pozetroninc/github-action-get-latest-release@v0.8.0
+        with:
+          repo: deno
+          owner: denoland
+          excludes: prerelease,draft
+      - name: Summary
+        id: summary
+        run: |
+          echo "# Deno Version Check" >> $GITHUB_STEP_SUMMARY
+          echo "The **currently** used Deno version is \`${{ steps.current.outputs.version }}\`." >> $GITHUB_STEP_SUMMARY
+          echo "The **latest** Deno version is \`${{ steps.latest.outputs.release }}\`." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.current.outputs.version }}" = "${{ steps.latest.outputs.release }}" ]; then
+            echo "isNew=false" >> $GITHUB_OUTPUT
+            echo "The version is up to date. No update was triggered" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "isNew=true" >> $GITHUB_OUTPUT
+            echo "A new version is available. An update was triggered." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  update:
+    name: Update Version
+    needs:
+      - check
+    if: needs.check.outputs.isNew == 'true'
+    uses: ./.github/workflows/deno_update.yaml
+    secrets: inherit
+    with:
+      version: ${{ needs.check.outputs.version }}

@@ -3,6 +3,7 @@ use cadency_core::{
     CadencyCommand, CadencyError,
 };
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 
 #[derive(CommandBaseline, Default)]
 #[description = "Play Ping-Pong"]
@@ -16,8 +17,10 @@ impl CadencyCommand for Ping {
         _command: &'a mut CommandInteraction,
         response_builder: &'a mut ResponseBuilder,
     ) -> Result<Response, CadencyError> {
-        Ok(response_builder
-            .message(Some("Pong!".to_string()))
-            .build()?)
+        let embed = serenity::builder::CreateEmbed::default()
+            .title("🏓 Ping-Pong")
+            .color(Colour::from_rgb(0, 255, 255)) // Aqua
+            .description("🏓 **Pong!**\n\nBot is online and responding!");
+        Ok(response_builder.embeds(vec![embed]).build()?)
     }
 }

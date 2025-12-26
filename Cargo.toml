@@ -11,13 +11,13 @@ resolver = "2"
 
 [workspace.dependencies]
 env_logger = "0.11.8"
-log = "0.4.28"
+log = "0.4.29"
 thiserror = "2.0.17"
-serde_json = "1.0.145"
+serde_json = "1.0.147"
 derive_builder = "0.20.2"
 
 [workspace.dependencies.serenity]
-version = "0.12.4"
+version = "0.12.5"
 default-features = false
 features = ["client", "gateway", "rustls_backend", "model", "voice", "cache"]
 
@@ -34,7 +34,7 @@ version = "1.0.228"
 features = ["derive"]
 
 [workspace.dependencies.reqwest]
-version = "0.12.24"
+version = "0.12.28"
 default-features = false
 features = ["rustls-tls", "json"]
 

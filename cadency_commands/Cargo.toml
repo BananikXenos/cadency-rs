@@ -12,10 +12,10 @@ repository = "https://github.com/BananikXenos/cadency-rs"
 log = { workspace = true }
 serenity = { workspace = true }
 songbird = { workspace = true }
-tokio = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 rand = "0.9.2"
+num-bigint = "0.4.6"
 
 [dependencies.cadency_core]
 path = "../cadency_core"

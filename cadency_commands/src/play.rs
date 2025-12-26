@@ -5,6 +5,7 @@ use cadency_core::{
 };
 use reqwest::Url;
 use serenity::{async_trait, client::Context, model::application::CommandInteraction};
+use serenity::model::colour::Colour;
 use songbird::events::Event;
 
 #[derive(CommandBaseline)]
@@ -55,21 +56,16 @@ impl CadencyCommand for Play {
         let (manager, call, guild_id) = utils::voice::join(ctx, command).await?;
 
         let response_builder = if is_playlist {
-            let playlist_items =
-                cadency_yt_playlist::fetch_playlist_songs(search_payload.clone()).unwrap();
-            playlist_items
-                .messages
-                .iter()
-                .for_each(|entry| debug!("🚧 Unable to parse song from playlist: {entry:?}",));
+            let playlist_items = cadency_yt_playlist::fetch_playlist_songs(search_payload.clone()).unwrap();
+            playlist_items.messages.iter().for_each(|entry| debug!("🚧 Unable to parse song from playlist: {entry:?}",));
             let songs = playlist_items.data;
             let mut amount_added_playlist_songs = 0;
             let mut amount_total_added_playlist_duration = 0_f32;
+            let mut skipped_by_limit = 0;
+            let mut skipped_unavailable = 0;
+
             for song in songs {
-                // Add max the first 30 songs of the playlist
-                // and only if the duration of the song is below 10mins
-                if amount_added_playlist_songs <= self.playlist_song_limit
-                    && song.duration <= self.song_length_limit
-                {
+                if amount_added_playlist_songs <= self.playlist_song_limit && song.duration <= self.song_length_limit {
                     match utils::voice::add_song(ctx, call.clone(), song.url, true).await {
                         Ok((added_song_meta, _)) => {
                             amount_added_playlist_songs += 1;
@@ -78,34 +74,14 @@ impl CadencyCommand for Play {
                         }
                         Err(err) => {
                             error!("❌ Failed to add song: {err}");
+                            skipped_unavailable += 1;
                         }
                     }
+                } else {
+                    skipped_by_limit += 1;
                 }
             }
             amount_total_added_playlist_duration /= 60_f32;
-            // This call interaction is scoped to drop the mutex lock as soon as possible
-            {
-                let mut handler = call.lock().await;
-                handler.remove_all_global_events();
-                handler.add_global_event(
-                    Event::Periodic(std::time::Duration::from_secs(120), None),
-                    InactiveHandler { guild_id, manager },
-                );
-            }
-            response_builder.message(Some(format!(
-                ":white_check_mark: **Added ___{amount_added_playlist_songs}___ songs to the queue with a duration of ___{amount_total_added_playlist_duration:.2}___ mins** \n**Playing** :notes: `{search_payload}`",
-            )))
-        } else {
-            let (added_song_meta, _) =
-                utils::voice::add_song(ctx, call.clone(), search_payload.clone(), is_url)
-                    .await
-                    .map_err(|err| {
-                        error!("❌ Failed to add song to queue: {}", err);
-                        CadencyError::Command {
-                            message: ":x: **Couldn't add audio source to the queue!**".to_string(),
-                        }
-                    })?;
-            // This call interaction is scoped to drop the mutex lock as soon as possible
             {
                 let mut handler = call.lock().await;
                 handler.remove_all_global_events();
@@ -115,22 +91,95 @@ impl CadencyCommand for Play {
                 );
             }
 
+            let mut description = format!(
+                "✅ **Added {} song{} to the queue**\n⏱️ **Total Duration:** {:.1} minutes",
+                amount_added_playlist_songs,
+                if amount_added_playlist_songs == 1 { "" } else { "s" },
+                amount_total_added_playlist_duration
+            );
+
+            if skipped_by_limit > 0 {
+                description.push_str(&format!(
+                    "\n⚠️ **Skipped:** {} song{} (exceeded limits)",
+                    skipped_by_limit,
+                    if skipped_by_limit == 1 { "" } else { "s" }
+                ));
+            }
+
+            if skipped_unavailable > 0 {
+                description.push_str(&format!(
+                    "\n🚫 **Unavailable:** {} song{} (removed or restricted)",
+                    skipped_unavailable,
+                    if skipped_unavailable == 1 { "" } else { "s" }
+                ));
+            }
+
+            description.push_str(&format!("\n🎵 **Now Playing**"));
+
+            let embed = serenity::builder::CreateEmbed::default()
+                .title("📋 Playlist Added")
+                .color(Colour::from_rgb(0, 255, 127)) // Spring green
+                .description(description)
+                .footer(serenity::all::CreateEmbedFooter::new(
+                    format!("Playlist limit: {} songs, {} seconds per song",
+                            self.playlist_song_limit,
+                            self.song_length_limit as i32
+                    )
+                ));
+            response_builder.embeds(vec![embed])
+        } else {
+            let (added_song_meta, _) = utils::voice::add_song(ctx, call.clone(), search_payload.clone(), is_url)
+                .await
+                .map_err(|err| {
+                    let err_str = format!("{}", err);
+                    error!("❌ Failed to add song to queue: {}", err);
+
+                    let message = if err_str.contains("Video unavailable") || err_str.contains("not available") {
+                        "❌ **Video is unavailable!**\n\nThis video may be private, deleted, or region-restricted."
+                    } else {
+                        "❌ **Couldn't add audio source to the queue!**\n\nPlease check the URL or search query."
+                    };
+
+                    CadencyError::Command {
+                        message: message.to_string(),
+                    }
+                })?;
+            {
+                let mut handler = call.lock().await;
+                handler.remove_all_global_events();
+                handler.add_global_event(
+                    Event::Periodic(std::time::Duration::from_secs(120), None),
+                    InactiveHandler { guild_id, manager },
+                );
+            }
+
+            let title = added_song_meta.title.as_ref().map_or("Unknown Title", |title| title);
             let song_url = if is_url {
-                search_payload
+                search_payload.clone()
             } else {
-                added_song_meta
-                    .source_url
-                    .as_ref()
-                    .map_or("unknown url".to_string(), |url| url.to_owned())
+                added_song_meta.source_url.as_ref().map_or("Unknown URL".to_string(), |url| url.to_owned())
             };
-            response_builder.message(Some(format!(
-                ":white_check_mark: **Added song to the queue and started playing:** \n:notes: `{}` \n:link: `{}`",
-                song_url,
-                added_song_meta
-                    .title
-                    .as_ref()
-                    .map_or(":x: **Unknown title**", |title| title)
-        )))
+
+            let mut description = format!("🎵 **Title:** `{}`", title);
+
+            if song_url != "Unknown URL" {
+                description.push_str(&format!("\n🔗 **Source:** [View on YouTube]({})", song_url));
+            }
+
+            // Add duration if available
+            if let Some(duration) = added_song_meta.duration {
+                let minutes = duration.as_secs() / 60;
+                let seconds = duration.as_secs() % 60;
+                description.push_str(&format!("\n⏱️ **Duration:** {}:{:02}", minutes, seconds));
+            }
+
+            description.push_str("\n\n✅ **Added to queue and started playing!**");
+
+            let embed = serenity::builder::CreateEmbed::default()
+                .title("🎶 Song Added")
+                .color(Colour::from_rgb(65, 105, 225)) // Royal blue
+                .description(description);
+            response_builder.embeds(vec![embed])
         };
         Ok(response_builder.build()?)
     }
